@@ -28,15 +28,19 @@ public class JwtFilter implements Filter {
             if (isValid) {
                 TokenDetails tokenDetails = jwtUtil.getTokenDetails(token);
                 httpRequest.setAttribute("role", tokenDetails.getRole());
+                chain.doFilter(request, response);
             } else {
-                ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT Token");
-                return;
+                sendErrorResponse((HttpServletResponse) response, "Invalid JWT Token:" );
             }
         }else {
-            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing Authorization Header");
-            return;
+            sendErrorResponse((HttpServletResponse) response, "Missing Authorization Header");
         }
+    }
 
-        chain.doFilter(request, response);
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"" + message + "\"}");
+        response.getWriter().flush();
     }
 }
